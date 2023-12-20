@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore paketini ekledik
 import 'package:food/views/homepage.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -9,6 +10,9 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance; // Firestore örneğini oluşturduk
+
   late String username;
   late String password;
   late String confirmPassword;
@@ -70,6 +74,16 @@ class _SignUpPageState extends State<SignUpPage> {
                       email: username,
                       password: password,
                     );
+
+                    // Kullanıcıyı Firestore'a ekleyelim
+                    await _firestore
+                        .collection('users')
+                        .doc(userCredential.user!.uid)
+                        .set({
+                      'username': username,
+                      // Diğer kullanıcı bilgileri buraya eklenebilir
+                    });
+
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (context) => Homepage()),

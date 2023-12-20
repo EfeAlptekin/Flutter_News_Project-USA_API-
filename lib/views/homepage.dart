@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:food/views/categorypage.dart';
 import 'package:food/views/authpage.dart';
 import 'package:food/views/signup.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:food/views/profilepage.dart';
 
 class Homepage extends StatefulWidget {
   @override
@@ -17,6 +19,7 @@ class _HomepageState extends State<Homepage> {
   List<CategoryModel> categories = List<CategoryModel>.empty();
   List<ArticleModel> articles = List<ArticleModel>.empty();
   bool _loading = true;
+  //bool isLoggedIn = false;
 
   void authpage() {
     Navigator.push(
@@ -29,6 +32,13 @@ class _HomepageState extends State<Homepage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SignUpPage()),
+    );
+  }
+
+  ProfilePage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProfilePage()),
     );
   }
 
@@ -55,8 +65,7 @@ class _HomepageState extends State<Homepage> {
         backgroundColor: Colors.white,
         elevation: 0.0,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment
-              .center, // this is to bring the row text in center
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
               "Flutter ",
@@ -69,8 +78,6 @@ class _HomepageState extends State<Homepage> {
           ],
         ),
       ),
-
-      // category widgets
       body: _loading
           ? Center(
               child: CircularProgressIndicator(),
@@ -99,7 +106,7 @@ class _HomepageState extends State<Homepage> {
                       child: ListView.builder(
                         itemCount: articles.length,
                         physics: ClampingScrollPhysics(),
-                        shrinkWrap: true, // add this otherwise an error
+                        shrinkWrap: true,
                         itemBuilder: (context, index) {
                           return NewsTemplate(
                             urlToImage: articles[index].urlToImage,
@@ -139,6 +146,44 @@ class _HomepageState extends State<Homepage> {
               label: Text('Sign Up'),
               icon: Icon(Icons.person_add),
               backgroundColor: Colors.green,
+            ),
+          ],
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                'User Profile',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('Profile'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+                //ProfilePage();
+              },
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.exit_to_app),
+              title: Text('Log Out'),
+              onTap: () {
+                FirebaseAuth.instance.signOut();
+              },
             ),
           ],
         ),

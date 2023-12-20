@@ -1,0 +1,15 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '10.0'
+
+target 'your_project_name' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  # Add the Firebase pods
+  pod 'Firebase/Core'
+  pod 'Firebase/Auth'
+  #  (örneğin: pod 'Firebase/Auth')
+end
+
+
+
