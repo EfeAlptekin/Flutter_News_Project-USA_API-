@@ -5,7 +5,8 @@ import 'package:food/model/newsmodel.dart';
 import 'package:food/model/categorymodel.dart';
 import 'package:flutter/material.dart';
 import 'package:food/views/categorypage.dart';
-//import 'package:food/views/categorypage.dart';
+import 'package:food/views/authpage.dart';
+import 'package:food/views/signup.dart';
 
 class Homepage extends StatefulWidget {
   @override
@@ -13,24 +14,36 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  //get our categories list
-
   List<CategoryModel> categories = List<CategoryModel>.empty();
-
-  // get our newlists first
-
   List<ArticleModel> articles = List<ArticleModel>.empty();
+  bool _loading = true;
+
+  void authpage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AuthPage()),
+    );
+  }
+
+  void signup() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SignUpPage()),
+    );
+  }
 
   getNews() async {
     News newsdata = News();
     await newsdata.getNews();
     articles = newsdata.datatobesavedin;
+    setState(() {
+      _loading = false;
+    });
   }
 
   @override
   void initState() {
     super.initState();
-
     categories = getCategories();
     getNews();
   }
@@ -41,55 +54,93 @@ class _HomepageState extends State<Homepage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.0,
-        title:
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-          Text(
-            "Lele",
-            style: TextStyle(color: Colors.blueGrey),
-          ),
-          Text(
-            "News",
-            style: TextStyle(color: Colors.blueGrey),
-          ),
-        ]),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment
+              .center, // this is to bring the row text in center
+          children: <Widget>[
+            Text(
+              "Flutter ",
+              style: TextStyle(color: Colors.black),
+            ),
+            Text(
+              "News",
+              style: TextStyle(color: Colors.blueAccent),
+            ),
+          ],
+        ),
       ),
-      body: SingleChildScrollView(
-        // color: Colors.white,
-        child: Container(
-          color: Colors.white,
-          child: Column(
-            children: <Widget>[
-              Container(
-                height: 70.0,
-                padding: EdgeInsets.symmetric(horizontal: 12.0),
-                child: ListView.builder(
-                  itemCount: categories.length,
-                  shrinkWrap: true,
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (context, index) {
-                    return CategoryTile(
-                      imageUrl: categories[index].imageUrl,
-                      categoryName: categories[index].categoryName,
-                    );
-                  },
+
+      // category widgets
+      body: _loading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : SingleChildScrollView(
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  children: <Widget>[
+                    Container(
+                      height: 70.0,
+                      padding: EdgeInsets.symmetric(horizontal: 12.0),
+                      child: ListView.builder(
+                        itemCount: categories.length,
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                        itemBuilder: (context, index) {
+                          return CategoryTile(
+                            imageUrl: categories[index].imageUrl,
+                            categoryName: categories[index].categoryName,
+                          );
+                        },
+                      ),
+                    ),
+                    Container(
+                      child: ListView.builder(
+                        itemCount: articles.length,
+                        physics: ClampingScrollPhysics(),
+                        shrinkWrap: true, // add this otherwise an error
+                        itemBuilder: (context, index) {
+                          return NewsTemplate(
+                            urlToImage: articles[index].urlToImage,
+                            title: articles[index].title,
+                            description: articles[index].description,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Container(
-                child: ListView.builder(
-                  itemCount: articles.length,
-                  physics: ClampingScrollPhysics(),
-                  shrinkWrap: true,
-                  itemBuilder: (context, index) {
-                    return NewsTemplate(
-                      urlToImage: articles[index].urlToImage,
-                      title: articles[index].title,
-                      description: articles[index].description,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AuthPage()),
+                );
+              },
+              label: Text('Sign In'),
+              icon: Icon(Icons.login),
+              backgroundColor: Colors.blue,
+            ),
+            FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignUpPage()),
+                );
+              },
+              label: Text('Sign Up'),
+              icon: Icon(Icons.person_add),
+              backgroundColor: Colors.green,
+            ),
+          ],
         ),
       ),
     );
