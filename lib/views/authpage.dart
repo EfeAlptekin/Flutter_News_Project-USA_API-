@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food/views/homepage.dart';
 
 class AuthPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    String username = '';
+    String password = '';
+    String confirmPassword = ''; // Confirm password field
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Padding(
@@ -13,6 +19,9 @@ class AuthPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextFormField(
+              onChanged: (value) {
+                username = value;
+              },
               decoration: InputDecoration(
                 labelText: 'Username',
                 border: OutlineInputBorder(),
@@ -20,6 +29,9 @@ class AuthPage extends StatelessWidget {
             ),
             SizedBox(height: 20),
             TextFormField(
+              onChanged: (value) {
+                password = value;
+              },
               obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Password',
@@ -27,45 +39,52 @@ class AuthPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
+            TextFormField(
+              onChanged: (value) {
+                confirmPassword = value;
+              },
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Confirm Password', // Confirm password field
+                border: OutlineInputBorder(),
+              ),
+            ),
+            SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Actions when the login button is pressed
-                // Implement login logic here
-
-                // Get the username and password from the TextFormField
-                String username = '';
-                String password = '';
-
-                // Perform validation, authentication, etc.
-                // For example, check if the username and password are correct
-                if (username == 'correctUsername' &&
-                    password == 'correctPassword') {
-                  // If the credentials are correct, navigate to the home page
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => Homepage()),
-                  );
-                } else {
-                  // If the credentials are incorrect, show an error message or handle accordingly
-                  // For example, show a snackbar with an error message
+              onPressed: () async {
+                if (password != confirmPassword) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Invalid username or password'),
+                      content: Text('Passwords do not match'),
                     ),
                   );
-                  // Go back to the previous page after showing the SnackBar
-                  Future.delayed(Duration(seconds: 2), () {
-                    Navigator.pop(context);
-                  });
+                  return;
                 }
-              },
-              child: Text('Login'),
-            ),
-            SizedBox(height: 10),
-            TextButton(
-              onPressed: () {
-                // Actions when the sign-up button is pressed
-                // Implement sign-up logic here
+
+                try {
+                  UserCredential userCredential =
+                      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                    email: username,
+                    password: password,
+                  );
+
+                  if (userCredential.user != null) {
+                    FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+                      'username': username,
+                    });
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => Homepage()),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $e'),
+                    ),
+                  );
+                }
               },
               child: Text('Sign Up'),
             ),

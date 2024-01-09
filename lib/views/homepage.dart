@@ -6,9 +6,11 @@ import 'package:food/model/categorymodel.dart';
 import 'package:flutter/material.dart';
 import 'package:food/views/categorypage.dart';
 import 'package:food/views/authpage.dart';
+import 'package:food/views/savednewspage.dart';
 import 'package:food/views/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:food/views/profilepage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Homepage extends StatefulWidget {
   @override
@@ -35,10 +37,17 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
-  ProfilePage() {
+  void navigateToProfilePage() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => ProfilePage()),
+    );
+  }
+
+  void navigateToSavedNews() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SavedNews()),
     );
   }
 
@@ -170,11 +179,15 @@ class _HomepageState extends State<Homepage> {
               leading: Icon(Icons.person),
               title: Text('Profile'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()),
-                );
-                //ProfilePage();
+                navigateToProfilePage();
+              },
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.bookmark),
+              title: Text('Saved News'),
+              onTap: () {
+                navigateToSavedNews();
               },
             ),
             Divider(),
@@ -256,42 +269,96 @@ class CategoryTile extends StatelessWidget {
 
 //Creating template for news
 
-class NewsTemplate extends StatelessWidget {
+class NewsTemplate extends StatefulWidget {
   final String title, description, url, urlToImage;
-  NewsTemplate(
-      {this.title = "",
-      this.description = "",
-      this.urlToImage = "",
-      this.url = ""});
+  NewsTemplate({
+    this.title = "",
+    this.description = "",
+    this.urlToImage = "",
+    this.url = "",
+  });
+
+  @override
+  _NewsTemplateState createState() => _NewsTemplateState();
+}
+
+class _NewsTemplateState extends State<NewsTemplate> {
+  bool _showSaveOption = false;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.all(16),
-      child: Column(
-        children: <Widget>[
-          ClipRRect(
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _showSaveOption = !_showSaveOption;
+        });
+      },
+      child: Container(
+        margin: EdgeInsets.all(16),
+        child: Column(
+          children: <Widget>[
+            ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: CachedNetworkImage(
-                imageUrl: urlToImage,
+                imageUrl: widget.urlToImage,
                 width: 380,
                 height: 200,
                 fit: BoxFit.cover,
-              )),
-          SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              widget.title,
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18.0,
-                color: Colors.black),
-          ),
-          SizedBox(height: 8),
-          Text(
-            description,
-            style: TextStyle(fontSize: 15.0, color: Colors.grey[800]),
-          ),
-        ],
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              widget.description,
+              style: TextStyle(fontSize: 15.0, color: Colors.grey[800]),
+            ),
+            if (_showSaveOption)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    bool isLoggedIn = FirebaseAuth.instance.currentUser != null;
+
+                    if (isLoggedIn) {
+                      String userId = FirebaseAuth.instance.currentUser!.uid;
+
+                      Map<String, dynamic> savedArticle = {
+                        'title': widget.title,
+                        'description': widget.description,
+                        'urlToImage': widget.urlToImage,
+                        // Other news details can be added here
+                      };
+
+                      try {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(userId)
+                            .collection('savedArticles')
+                            .add(savedArticle);
+                      } catch (e) {
+                        print('Error occurred while saving the article: $e');
+                        // You can inform the user in case of an error
+                      }
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AuthPage()),
+                      );
+                    }
+                  },
+                  child: Text('Save'),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -4,6 +4,9 @@ import 'package:food/helper/newsdata.dart';
 //import 'package:food/model/categorymodel.dart';
 import 'package:food/model/newsmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:food/views/authpage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CategoryFragment extends StatefulWidget {
   final String category;
@@ -21,7 +24,6 @@ class _CategoryFragmentState extends State<CategoryFragment> {
     await newsdata.getNews(widget.category);
     articles = newsdata.datatobesavedin;
     setState(() {
-      // important method otherwise you would have to perform hot relod always
       _loading = false;
     });
   }
@@ -77,42 +79,95 @@ class _CategoryFragmentState extends State<CategoryFragment> {
   }
 }
 
-class NewsTemplate extends StatelessWidget {
+class NewsTemplate extends StatefulWidget {
   final String title, description, url, urlToImage;
-  NewsTemplate(
-      {this.title = "",
-      this.description = "",
-      this.urlToImage = "",
-      this.url = ""});
+  NewsTemplate({
+    this.title = "",
+    this.description = "",
+    this.urlToImage = "",
+    this.url = "",
+  });
+
+  @override
+  _NewsTemplateState createState() => _NewsTemplateState();
+}
+
+class _NewsTemplateState extends State<NewsTemplate> {
+  bool _showSaveOption = false;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.all(16),
-      child: Column(
-        children: <Widget>[
-          ClipRRect(
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _showSaveOption = !_showSaveOption;
+        });
+      },
+      child: Container(
+        margin: EdgeInsets.all(16),
+        child: Column(
+          children: <Widget>[
+            ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: CachedNetworkImage(
-                imageUrl: urlToImage,
+                imageUrl: widget.urlToImage,
                 width: 380,
                 height: 200,
                 fit: BoxFit.cover,
-              )),
-          SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              widget.title,
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18.0,
-                color: Colors.black),
-          ),
-          SizedBox(height: 8),
-          Text(
-            description,
-            style: TextStyle(fontSize: 15.0, color: Colors.grey[800]),
-          ),
-        ],
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              widget.description,
+              style: TextStyle(fontSize: 15.0, color: Colors.grey[800]),
+            ),
+            if (_showSaveOption)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    bool isLoggedIn = FirebaseAuth.instance.currentUser != null;
+
+                    if (isLoggedIn) {
+                      String userId = FirebaseAuth.instance.currentUser!.uid;
+
+                      Map<String, dynamic> savedArticle = {
+                        'title': widget.title,
+                        'description': widget.description,
+                        'urlToImage': widget.urlToImage,
+                      };
+
+                      try {
+                        FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(userId)
+                            .collection('savedArticles')
+                            .add(savedArticle);
+                      } catch (e) {
+                        print('Error occurred while saving the article: $e');
+                      }
+                    } else {
+                      // If user didnt log in , redirect to AuthPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AuthPage()),
+                      );
+                    }
+                  },
+                  child: Text('Save'),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

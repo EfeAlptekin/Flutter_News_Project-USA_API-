@@ -1,15 +1,20 @@
-# Uncomment this line to define a global platform for your project
-platform :ios, '10.0'
+# Specify the platform for which you are writing the Podfile
+platform :ios, '11.0'
 
-target 'your_project_name' do
-  # Comment the next line if you don't want to use dynamic frameworks
-  use_frameworks!
-
-  # Add the Firebase pods
+# Define your target
+target 'Runner' do
+  # Add Firebase pods
   pod 'Firebase/Core'
   pod 'Firebase/Auth'
-  #  (örneğin: pod 'Firebase/Auth')
+  pod 'Firebase/Firestore'
+  # ... diğer Firebase kütüphaneleri
+  
+  # Diğer CocoaPods bağımlılıklarını ekleyin
 end
 
-
-
+# Flutter podlarını yükleyin
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
+end
